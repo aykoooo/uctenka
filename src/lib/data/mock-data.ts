@@ -3,6 +3,7 @@
 // ============================================================
 
 import type { BackendReceiptRow } from "@/types/backend";
+import { DEFAULT_CURRENCY } from "@/lib/constants/locale";
 
 const RAW_MOCK_RECEIPTS: BackendReceiptRow[] = [
     {
@@ -375,6 +376,7 @@ const timeShiftMs = now - baseDate;
 
 export const MOCK_RECEIPT_ROWS: BackendReceiptRow[] = RAW_MOCK_RECEIPTS.map((row) => ({
     ...row,
+    currency: row.currency || DEFAULT_CURRENCY,
     receipt_date: row.receipt_date
         ? new Date(new Date(row.receipt_date).getTime() + timeShiftMs).toISOString().split("T")[0]
         : null,

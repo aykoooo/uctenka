@@ -12,14 +12,25 @@ interface ReceiptDetailHeaderProps {
     isEditing?: boolean;
     onEditToggle?: () => void;
     isSaving?: boolean;
+    backHref?: string;
+    backLabel?: string;
+    hideEditButton?: boolean;
 }
 
-export function ReceiptDetailHeader({ receipt, isEditing, onEditToggle, isSaving }: ReceiptDetailHeaderProps) {
+export function ReceiptDetailHeader({
+    receipt,
+    isEditing,
+    onEditToggle,
+    isSaving,
+    backHref = "/receipts",
+    backLabel = "Zpět na účtenky",
+    hideEditButton = false,
+}: ReceiptDetailHeaderProps) {
     return (
         <div className="mb-6">
-            <Button variant="ghost" size="sm" className="mb-4 -ml-2" nativeButton={false} render={<Link href="/receipts" />}>
+            <Button variant="ghost" size="sm" className="mb-4 -ml-2" nativeButton={false} render={<Link href={backHref} />}>
                 <ArrowLeft className="mr-1 h-4 w-4" />
-                Zpět na účtenky
+                {backLabel}
             </Button>
 
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -28,7 +39,7 @@ export function ReceiptDetailHeader({ receipt, isEditing, onEditToggle, isSaving
                         {receipt.merchantName}
                     </h1>
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        <span className="text-xl font-bold">{formatCZK(receipt.amount)}</span>
+                        <span className="text-xl font-bold">{formatCZK(receipt.amount, receipt.currency)}</span>
                         <span className="text-muted-foreground">·</span>
                         <span className="text-muted-foreground">{formatDate(receipt.date)}</span>
                     </div>
@@ -42,7 +53,7 @@ export function ReceiptDetailHeader({ receipt, isEditing, onEditToggle, isSaving
                         showPercentage
                         percentage={receipt.confidence}
                     />
-                    {onEditToggle && !isEditing && (
+                    {onEditToggle && !isEditing && !hideEditButton && (
                         <Button variant="outline" size="sm" onClick={onEditToggle} className="ml-2">
                             <Edit2 className="mr-2 h-4 w-4" />
                             Upravit

@@ -25,7 +25,7 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
                             )}
                         </div>
                         <span className="text-base font-bold whitespace-nowrap">
-                            {formatCZK(receipt.amount)}
+                            {formatCZK(receipt.amount, receipt.currency)}
                         </span>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">

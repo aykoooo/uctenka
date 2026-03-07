@@ -66,12 +66,12 @@ export function ExpenseChart({ data }: ExpenseChartProps) {
                 <CardTitle className="text-base">Příjmy a výdaje</CardTitle>
                 <CardDescription>Posledních {chartData.length || 0} měsíců přehledu</CardDescription>
             </CardHeader>
-            <CardContent className="flex-1">
-                <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <CardContent className="flex flex-1 items-stretch pb-2">
+                <ChartContainer config={chartConfig} className="h-full min-h-[320px] w-full aspect-auto">
                     <BarChart
                         accessibilityLayer
                         data={chartData}
-                        margin={{ top: 12, right: 0, left: 0, bottom: 0 }}
+                        margin={{ top: 8, right: 0, left: 0, bottom: 0 }}
                         barCategoryGap="24%"
                     >
                         <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -102,7 +102,7 @@ export function ExpenseChart({ data }: ExpenseChartProps) {
                                 />
                             }
                         />
-                        <ChartLegend content={<ChartLegendContent />} />
+                        <ChartLegend verticalAlign="top" content={<ChartLegendContent />} />
                         <Bar
                             dataKey="income"
                             fill="var(--color-income)"

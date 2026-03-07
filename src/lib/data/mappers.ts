@@ -4,6 +4,7 @@
 // ============================================================
 
 import type { BackendReceiptRow, SupabaseReceiptRow, ConfidenceString } from "@/types/backend";
+import { DEFAULT_CURRENCY } from "@/lib/constants/locale";
 import type {
     Receipt,
     ReceiptStatus,
@@ -108,6 +109,7 @@ export function mapBackendReceiptToDomain(row: BackendReceiptRow): Receipt {
 
     return {
         id: row.id,
+        receiptNumber: null,
         merchantName: row.merchant_name,
         companyName: row.company_name,
         ico: row.ico,
@@ -115,7 +117,10 @@ export function mapBackendReceiptToDomain(row: BackendReceiptRow): Receipt {
         date: row.receipt_date ? new Date(row.receipt_date) : null,
         categoryId: mapCategory(row.category),
         amount: row.amount,
-        currency: row.currency || "CZK",
+        totalNet: null,
+        totalTax: null,
+        taxes: [],
+        currency: row.currency || DEFAULT_CURRENCY,
         status: mapStatus(row.status),
         confidence: row.confidence,
         confidenceLevel,
@@ -139,9 +144,13 @@ export function mapSupabaseToReceipt(row: SupabaseReceiptRow): Receipt {
     let companyName = null;
     let ico = null;
     let dic = null;
+    let receiptNumber = null;
     let amount = null;
-    let currency = "CZK";
+    let totalNet = null;
+    let totalTax = null;
+    let currency = DEFAULT_CURRENCY;
     let date = null;
+    const taxes: Receipt["taxes"] = [];
     let categoryId: CategoryId = "other";
     let confidence: number = 0;
     let confidenceLevel: ConfidenceLevel = "low";
@@ -155,18 +164,32 @@ export function mapSupabaseToReceipt(row: SupabaseReceiptRow): Receipt {
             for (const item of fields.supplier_company_registration.items) {
                 const type = item.fields?.type?.value;
                 const value = item.fields?.number?.value;
-                if (type === "INN" && value) {
+                if ((type === "INN" || type === "ICO") && value) {
                     ico = value;
-                } else if (type === "DIC" && value) {
+                } else if ((type === "DIC" || type === "VAT") && value) {
                     dic = value;
                 }
             }
         }
 
+        receiptNumber = fields.receipt_number?.value ?? null;
+
         // Amount and Currency
         amount = fields.total_amount?.value ?? null;
+        totalNet = fields.total_net?.value ?? null;
+        totalTax = fields.total_tax?.value ?? null;
         if (fields.locale?.fields?.currency?.value) {
             currency = fields.locale.fields.currency.value;
+        }
+
+        if (fields.taxes?.items?.length) {
+            for (const taxItem of fields.taxes.items) {
+                taxes.push({
+                    rate: taxItem.fields?.rate?.value ?? null,
+                    base: taxItem.fields?.base?.value ?? null,
+                    amount: taxItem.fields?.amount?.value ?? null,
+                });
+            }
         }
 
         // Date
@@ -187,13 +210,14 @@ export function mapSupabaseToReceipt(row: SupabaseReceiptRow): Receipt {
     }
 
     const reviewIssues: ReviewIssue[] = [];
-    if (!amount) reviewIssues.push({ type: "missing_amount", label: "Chybí částka" });
+    if (amount === null || amount === undefined) reviewIssues.push({ type: "missing_amount", label: "Chybí částka" });
     if (!date) reviewIssues.push({ type: "missing_date", label: "Chybí datum" });
     if (!merchantName || merchantName === "Neznámý obchodník") reviewIssues.push({ type: "missing_merchant", label: "Chybí obchod" });
     if (confidenceLevel === "low") reviewIssues.push({ type: "low_confidence", label: "Nízká spolehlivost čtení" });
 
     return {
         id: row.id,
+        receiptNumber,
         merchantName,
         companyName,
         ico,
@@ -201,6 +225,9 @@ export function mapSupabaseToReceipt(row: SupabaseReceiptRow): Receipt {
         date,
         categoryId,
         amount,
+        totalNet,
+        totalTax,
+        taxes,
         currency,
         status: "processed", // Static for now until backend status sync is implemented
         confidence,

@@ -12,10 +12,142 @@ import type {
 import type { DataRepository, ReceiptFilters } from "./repository";
 import { supabase } from "@/lib/supabase/client";
 import { mapSupabaseToReceipt } from "./mappers";
-import type { SupabaseReceiptRow } from "@/types/backend";
+import type {
+    SupabaseReceiptRow,
+    InferencePayload,
+    InferenceFields,
+    CompanyRegistrationItem,
+} from "@/types/backend";
 
 // Standard Supabase Table Name 
 const RECEIPTS_TABLE = "receipts";
+
+function formatDateToYmd(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function ensureInferencePayload(row: SupabaseReceiptRow): InferencePayload {
+    const payload = row.inference
+        ? (JSON.parse(JSON.stringify(row.inference)) as InferencePayload)
+        : ({ id: row.id } as InferencePayload);
+
+    if (!payload.result) {
+        payload.result = {};
+    }
+
+    if (!payload.result.fields) {
+        payload.result.fields = {};
+    }
+
+    return payload;
+}
+
+function upsertCompanyRegistration(
+    fields: InferenceFields,
+    type: "INN" | "DIC",
+    value: string | null
+) {
+    const existingItems = fields.supplier_company_registration?.items ?? [];
+    const items: CompanyRegistrationItem[] = [...existingItems];
+
+    const index = items.findIndex((item) => item.fields?.type?.value === type);
+
+    if (!value) {
+        if (index >= 0) {
+            items.splice(index, 1);
+        }
+    } else {
+        const nextItem: CompanyRegistrationItem = {
+            ...(index >= 0 ? items[index] : {}),
+            confidence: "Certain",
+            fields: {
+                ...(index >= 0 ? items[index].fields : {}),
+                type: {
+                    ...(index >= 0 ? items[index].fields?.type : {}),
+                    value: type,
+                    confidence: "Certain",
+                },
+                number: {
+                    ...(index >= 0 ? items[index].fields?.number : {}),
+                    value,
+                    confidence: "Certain",
+                },
+            },
+        };
+
+        if (index >= 0) {
+            items[index] = nextItem;
+        } else {
+            items.push(nextItem);
+        }
+    }
+
+    fields.supplier_company_registration = {
+        ...(fields.supplier_company_registration ?? {}),
+        confidence: fields.supplier_company_registration?.confidence ?? "Certain",
+        items,
+    };
+}
+
+function applyDirectFieldOverwrites(payload: InferencePayload, updates: Partial<Receipt>): InferencePayload {
+    const fields = payload.result?.fields;
+    if (!fields) {
+        return payload;
+    }
+
+    if (updates.merchantName !== undefined) {
+        const merchantName = updates.merchantName.trim();
+        fields.supplier_name = {
+            ...(fields.supplier_name ?? {}),
+            value: merchantName || null,
+            confidence: "Certain",
+        };
+    } else if (updates.companyName !== undefined) {
+        const companyName = updates.companyName?.trim() ?? "";
+        fields.supplier_name = {
+            ...(fields.supplier_name ?? {}),
+            value: companyName || null,
+            confidence: "Certain",
+        };
+    }
+
+    if (updates.amount !== undefined) {
+        fields.total_amount = {
+            ...(fields.total_amount ?? {}),
+            value: updates.amount,
+            confidence: "Certain",
+        };
+    }
+
+    if (updates.categoryId !== undefined) {
+        fields.purchase_category = {
+            ...(fields.purchase_category ?? {}),
+            value: updates.categoryId,
+            confidence: "Certain",
+        };
+    }
+
+    if (updates.date !== undefined) {
+        fields.date = {
+            ...(fields.date ?? {}),
+            value: updates.date ? formatDateToYmd(updates.date) : null,
+            confidence: "Certain",
+        };
+    }
+
+    if (updates.ico !== undefined) {
+        upsertCompanyRegistration(fields, "INN", updates.ico);
+    }
+
+    if (updates.dic !== undefined) {
+        upsertCompanyRegistration(fields, "DIC", updates.dic);
+    }
+
+    return payload;
+}
 
 export class SupabaseRepository implements DataRepository {
     async getReceipts(filters?: ReceiptFilters): Promise<Receipt[]> {
@@ -209,11 +341,40 @@ export class SupabaseRepository implements DataRepository {
     }
 
     async updateReceipt(id: string, updates: Partial<Receipt>): Promise<Receipt> {
-        // Technically, modifying inference data directly is an anti-pattern,
-        // but for user-overrides, we should have a `user_overrides` json field
-        // in the database. 
-        // For MVP, we'll throw an alert here as this is a non-destructive mock frontend.
-        console.warn(`Attempting to update Supabase row ${id} with:`, updates);
-        throw new Error("Updating receipts in Supabase is not implemented in this MVP layer.");
+        const { data: currentRow, error: fetchError } = await supabase
+            .from(RECEIPTS_TABLE)
+            .select("*")
+            .eq("id", id)
+            .single();
+
+        if (fetchError) {
+            throw new Error(`Failed to load receipt ${id} for update: ${fetchError.message}`);
+        }
+
+        if (!currentRow) {
+            throw new Error(`Receipt ${id} not found`);
+        }
+
+        const payload = ensureInferencePayload(currentRow as SupabaseReceiptRow);
+        const updatedInference = applyDirectFieldOverwrites(payload, updates);
+
+        const { data: updatedRow, error: updateError } = await supabase
+            .from(RECEIPTS_TABLE)
+            .update({
+                inference: updatedInference,
+            })
+            .eq("id", id)
+            .select("*")
+            .single();
+
+        if (updateError) {
+            throw new Error(`Failed to update receipt ${id}: ${updateError.message}`);
+        }
+
+        if (!updatedRow) {
+            throw new Error(`Receipt ${id} was updated but no row was returned`);
+        }
+
+        return mapSupabaseToReceipt(updatedRow as SupabaseReceiptRow);
     }
 }

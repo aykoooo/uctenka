@@ -13,6 +13,7 @@ import { CATEGORY_LIST } from "@/lib/constants/categories";
 import { Search, X } from "lucide-react";
 import type { ReceiptFilters } from "@/lib/data";
 import { UploadReceiptDialog } from "./upload-receipt-dialog";
+import { ExportAccountingDialog } from "./export-accounting-dialog";
 
 interface ReceiptsToolbarProps {
     filters: ReceiptFilters;
@@ -95,7 +96,8 @@ export function ReceiptsToolbar({ filters, onFiltersChange }: ReceiptsToolbarPro
                 </Button>
             )}
 
-            <div className="flex-1 sm:flex-none flex justify-end">
+            <div className="flex-1 sm:flex-none flex justify-end gap-2">
+                <ExportAccountingDialog filters={filters} />
                 <UploadReceiptDialog />
             </div>
         </div>

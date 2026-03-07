@@ -79,10 +79,10 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" render={<Link href="/" />}>
                             <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
-                                <Image src="/logo.svg" alt="uctenka logo" width={32} height={32} />
+                                <Image src="/logo.svg" alt="účtenka logo" width={32} height={32} />
                             </div>
                             <div className="flex flex-col leading-none">
-                                <span className="font-cascadia font-bold text-lg tracking-tight">uctenka.</span>
+                                <span className="font-cascadia font-bold text-lg tracking-tight">účtenka.</span>
                                 <span className="text-xs text-muted-foreground -mt-1">Klientská sekce</span>
                             </div>
                         </SidebarMenuButton>

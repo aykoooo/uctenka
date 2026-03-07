@@ -31,7 +31,7 @@ export function ReviewCard({ receipt }: ReviewCardProps) {
                             <div>
                                 <p className="font-medium truncate">{receipt.merchantName}</p>
                                 <p className="text-sm text-muted-foreground">
-                                    {formatDate(receipt.date)} · {formatCZK(receipt.amount)}
+                                    {formatDate(receipt.date)} · {formatCZK(receipt.amount, receipt.currency)}
                                 </p>
                             </div>
                             <ConfidenceBadge
@@ -46,7 +46,7 @@ export function ReviewCard({ receipt }: ReviewCardProps) {
                             <IssueBadges issues={receipt.reviewIssues} />
                         </div>
 
-                        <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`/receipts/${receipt.id}`} />}>
+                        <Button size="sm" variant="outline" nativeButton={false} render={<Link href={`/receipts/${receipt.id}?mode=review`} />}>
                             Zkontrolovat
                             <ArrowRight className="ml-1 h-3 w-3" />
                         </Button>

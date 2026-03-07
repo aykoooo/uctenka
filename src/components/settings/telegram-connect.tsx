@@ -28,7 +28,7 @@ export function TelegramConnect() {
                 {!code ? (
                     <div className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                            1. Otevřete Telegram a najděte bota <strong>@uctenkaAppBot</strong><br />
+                            1. Otevřete Telegram a najděte bota <strong>@reciept_reciever_bot</strong><br />
                             2. Klikněte na tlačítko níže pro vygenerování párovacího kódu<br />
                             3. Pošlete kód botovi
                         </p>
@@ -41,7 +41,7 @@ export function TelegramConnect() {
                             {code}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            Pošlete tento kód botovi <strong>@uctenkaAppBot</strong> na Telegramu. Kód vyprší za 15 minut.
+                            Pošlete tento kód botovi <strong>@reciept_reciever_bot</strong> na Telegramu. Kód vyprší za 15 minut.
                         </p>
                         <div className="flex items-center justify-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 mt-4">
                             <CheckCircle2 className="h-4 w-4" />

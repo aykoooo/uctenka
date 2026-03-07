@@ -57,7 +57,7 @@ export function ReceiptsTable({ receipts }: ReceiptsTableProps) {
                                 <CategoryBadge categoryId={receipt.categoryId} />
                             </TableCell>
                             <TableCell className="text-right font-medium text-sm">
-                                {formatCZK(receipt.amount)}
+                                {formatCZK(receipt.amount, receipt.currency)}
                             </TableCell>
                             <TableCell>
                                 <StatusBadge status={receipt.status} />

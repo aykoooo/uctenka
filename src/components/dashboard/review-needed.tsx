@@ -54,7 +54,7 @@ export function ReviewNeeded({ receipts }: ReviewNeededProps) {
                                     </div>
                                 </div>
                                 <div className="ml-auto flex flex-col items-end gap-1">
-                                    <span className="font-medium text-sm">{formatCZK(receipt.amount)}</span>
+                                    <span className="font-medium text-sm">{formatCZK(receipt.amount, receipt.currency)}</span>
                                     <span className="text-xs text-muted-foreground">{formatDate(receipt.date)}</span>
                                 </div>
                             </Link>

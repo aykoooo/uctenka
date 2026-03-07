@@ -5,10 +5,13 @@ import { getRepository } from "@/lib/data";
 
 interface ReceiptDetailPageProps {
     params: Promise<{ id: string }>;
+    searchParams?: Promise<{ mode?: string }>;
 }
 
-export default async function ReceiptDetailPage({ params }: ReceiptDetailPageProps) {
+export default async function ReceiptDetailPage({ params, searchParams }: ReceiptDetailPageProps) {
     const { id } = await params;
+    const resolvedSearchParams = searchParams ? await searchParams : undefined;
+    const startInReviewMode = resolvedSearchParams?.mode === "review";
     const repo = getRepository();
     const receipt = await repo.getReceiptById(id);
 
@@ -25,7 +28,7 @@ export default async function ReceiptDetailPage({ params }: ReceiptDetailPagePro
                 ]}
             />
             <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-                <ReceiptDetailInteractive initialReceipt={receipt} />
+                <ReceiptDetailInteractive initialReceipt={receipt} startInReviewMode={startInReviewMode} />
             </div>
         </>
     );

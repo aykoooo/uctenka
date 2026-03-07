@@ -49,7 +49,7 @@ export function RecentReceipts({ receipts }: RecentReceiptsProps) {
                                     </div>
                                 </div>
                                 <div className="ml-auto font-medium">
-                                    {formatCZK(receipt.amount)}
+                                    {formatCZK(receipt.amount, receipt.currency)}
                                 </div>
                             </Link>
                         )

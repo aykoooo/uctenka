@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { ToastProvider } from "@/components/shared/toast-provider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -11,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "uctenka – Správa účtenek",
+  title: "účtenka – Správa účtenek",
   description: "Sledujte své výdaje a účtenky na jednom místě.",
 };
 
@@ -31,12 +32,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-              {children}
-            </SidebarInset>
-          </SidebarProvider>
+          <ToastProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <SidebarInset>
+                {children}
+              </SidebarInset>
+            </SidebarProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

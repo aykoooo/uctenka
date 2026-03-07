@@ -39,8 +39,15 @@ export interface Category {
   icon: ComponentType<{ className?: string; style?: CSSProperties }>;
 }
 
+export interface ReceiptTaxLine {
+  rate: number | null;
+  base: number | null;
+  amount: number | null;
+}
+
 export interface Receipt {
   id: string;
+  receiptNumber: string | null;
   merchantName: string;
   companyName: string | null;
   ico: string | null;
@@ -48,6 +55,9 @@ export interface Receipt {
   date: Date | null;
   categoryId: CategoryId | null;
   amount: number | null;
+  totalNet: number | null;
+  totalTax: number | null;
+  taxes: ReceiptTaxLine[];
   currency: string;
   status: ReceiptStatus;
   confidence: number; // 0–100

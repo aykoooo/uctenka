@@ -86,19 +86,19 @@ export function CategoryChart({ data }: CategoryChartProps) {
                 <CardTitle>Kategorie výdajů</CardTitle>
                 <CardDescription>Podíl kategorií na celkových výdajích</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-1 items-center justify-center px-2 pb-1 pt-1">
+            <CardContent className="flex flex-1 items-center justify-center px-2 pb-0 pt-0">
                 <ChartContainer
                     config={chartConfig}
-                    className="mx-auto h-[360px] w-full max-w-[460px]"
+                    className="mx-auto h-[320px] w-full max-w-[460px] aspect-auto"
                 >
                     <RadialBarChart
                         data={chartData}
                         startAngle={180}
                         endAngle={0}
                         cx="50%"
-                        cy="88%"
-                        innerRadius={110}
-                        outerRadius={176}
+                        cy="74%"
+                        innerRadius={114}
+                        outerRadius={184}
                     >
                         <ChartTooltip
                             cursor={false}
