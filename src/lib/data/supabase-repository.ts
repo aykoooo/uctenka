@@ -21,6 +21,22 @@ import type {
 
 // Standard Supabase Table Name 
 const RECEIPTS_TABLE = "receipts";
+const INVOICE_PREFIX = "Faktura: ";
+
+function isIncomeInvoice(receipt: Receipt): boolean {
+    return receipt.merchantName.startsWith(INVOICE_PREFIX) && (receipt.amount ?? 0) < 0;
+}
+
+function getExpenseAmount(receipt: Receipt): number {
+    const amount = receipt.amount ?? 0;
+    if (isIncomeInvoice(receipt)) return 0;
+    return amount > 0 ? amount : 0;
+}
+
+function getIncomeAmount(receipt: Receipt): number {
+    if (!isIncomeInvoice(receipt)) return 0;
+    return Math.abs(receipt.amount ?? 0);
+}
 
 function formatDateToYmd(date: Date): string {
     const year = date.getFullYear();
@@ -231,8 +247,8 @@ export class SupabaseRepository implements DataRepository {
             return r.date.getMonth() === previousMonth && r.date.getFullYear() === previousMonthYear;
         });
 
-        const monthlyExpenses = currentMonthReceipts.reduce((sum, r) => sum + (r.amount || 0), 0);
-        const previousMonthExpenses = previousMonthReceipts.reduce((sum, r) => sum + (r.amount || 0), 0);
+        const monthlyExpenses = currentMonthReceipts.reduce((sum, r) => sum + getExpenseAmount(r), 0);
+        const previousMonthExpenses = previousMonthReceipts.reduce((sum, r) => sum + getExpenseAmount(r), 0);
 
         const getTopCategory = (
             monthReceipts: Receipt[]
@@ -240,9 +256,11 @@ export class SupabaseRepository implements DataRepository {
             const categoryMap = new Map<CategoryId, number>();
 
             monthReceipts.forEach((receipt) => {
-                if (!receipt.categoryId || receipt.amount === null) return;
+                if (!receipt.categoryId) return;
+                const expenseAmount = getExpenseAmount(receipt);
+                if (expenseAmount <= 0) return;
                 const current = categoryMap.get(receipt.categoryId) || 0;
-                categoryMap.set(receipt.categoryId, current + receipt.amount);
+                categoryMap.set(receipt.categoryId, current + expenseAmount);
             });
 
             let top: DashboardStats["topCategory"] = null;
@@ -280,13 +298,15 @@ export class SupabaseRepository implements DataRepository {
         const receipts = await this.getReceipts();
 
         // Naive client-side aggregation
-        const monthlyMap = new Map<string, number>(); // "YYYY-MM" -> amount
+        const monthlyMap = new Map<string, { amount: number; income: number }>(); // "YYYY-MM" -> values
 
         receipts.forEach(r => {
-            if (!r.date || !r.amount) return;
+            if (!r.date || r.amount === null) return;
             const month = `${r.date.getFullYear()}-${String(r.date.getMonth() + 1).padStart(2, '0')}`;
-            const current = monthlyMap.get(month) || 0;
-            monthlyMap.set(month, current + r.amount);
+            const current = monthlyMap.get(month) || { amount: 0, income: 0 };
+            current.amount += getExpenseAmount(r);
+            current.income += getIncomeAmount(r);
+            monthlyMap.set(month, current);
         });
 
         // Convert to array and sort
@@ -303,8 +323,8 @@ export class SupabaseRepository implements DataRepository {
             result.push({
                 month: monthStr,
                 label: `${czechMonthsFull[monthIndex]}`,
-                amount: monthlyMap.get(monthStr) || 0,
-                income: 0, // Placeholder as we only track expenses for now
+                amount: monthlyMap.get(monthStr)?.amount || 0,
+                income: monthlyMap.get(monthStr)?.income || 0,
             });
         }
 
@@ -316,11 +336,14 @@ export class SupabaseRepository implements DataRepository {
         const breakdownMap = new Map<string, { amount: number, count: number }>();
 
         receipts.forEach(r => {
-            if (!r.categoryId || !r.amount) return;
+            if (!r.categoryId) return;
+
+            const expenseAmount = getExpenseAmount(r);
+            if (expenseAmount <= 0) return;
 
             const current = breakdownMap.get(r.categoryId) || { amount: 0, count: 0 };
             breakdownMap.set(r.categoryId, {
-                amount: current.amount + r.amount,
+                amount: current.amount + expenseAmount,
                 count: current.count + 1
             });
         });

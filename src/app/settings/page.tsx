@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { getCurrentUser } from "@/lib/auth";
-import { User, Palette, Database } from "lucide-react";
+import { User, Palette, Database, CheckCircle2 } from "lucide-react";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { TelegramConnect } from "@/components/settings/telegram-connect";
 
@@ -50,8 +50,8 @@ export default function SettingsPage() {
                     {/* Telegram Integration */}
                     <TelegramConnect />
 
-                    {/* Data / Supabase placeholder */}
-                    <Card className="opacity-60">
+                    {/* Data / Supabase status */}
+                    <Card>
                         <CardHeader>
                             <div className="flex items-center gap-3">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-ring/10 dark:bg-ring/20">
@@ -59,10 +59,16 @@ export default function SettingsPage() {
                                 </div>
                                 <div>
                                     <CardTitle className="text-base">Datové připojení</CardTitle>
-                                    <CardDescription>Brzy k dispozici – napojení na Supabase</CardDescription>
+                                    <CardDescription>Připojeno k Supabase</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
+                        <CardContent>
+                            <div className="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                <CheckCircle2 className="h-4 w-4" />
+                                Připojení je aktivní
+                            </div>
+                        </CardContent>
                     </Card>
                 </div>
             </div>

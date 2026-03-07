@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import type { CategoryBreakdown } from "@/types/domain";
 import { CATEGORIES } from "@/lib/constants/categories";
-import { formatCZKCompact } from "@/lib/formatters";
+import { formatCZK, formatCZKCompact } from "@/lib/formatters";
 import {
     ChartConfig,
     ChartContainer,
@@ -73,12 +73,6 @@ export function CategoryChart({ data }: CategoryChartProps) {
     const topCategoryLabel = topCategory
         ? CATEGORIES[topCategory.categoryId]?.label ?? "Ostatní"
         : "Ostatní";
-    const topCategoryShare = totalExpenses > 0 && topCategory
-        ? (topCategory.amount / totalExpenses) * 100
-        : 0;
-    const topCategoryShareLabel = topCategoryShare.toLocaleString("cs-CZ", {
-        maximumFractionDigits: 1,
-    });
 
     return (
         <Card className="flex h-full flex-col">
@@ -102,7 +96,17 @@ export function CategoryChart({ data }: CategoryChartProps) {
                     >
                         <ChartTooltip
                             cursor={false}
-                            content={<ChartTooltipContent hideLabel />}
+                            content={
+                                <ChartTooltipContent
+                                    hideLabel
+                                    formatter={(value, name) => (
+                                        <div className="flex min-w-[150px] items-center justify-between gap-3">
+                                            <span className="text-muted-foreground">{name}</span>
+                                            <span className="font-medium text-foreground">{formatCZK(Number(value))}</span>
+                                        </div>
+                                    )}
+                                />
+                            }
                         />
                         <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
                             <Label
@@ -151,7 +155,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
             </CardContent>
             <CardFooter className="flex-col items-start gap-2 text-sm">
                 <div className="flex items-center gap-2 font-medium leading-none">
-                    Nejvyšší podíl má {topCategoryLabel} ({topCategoryShareLabel} %)
+                    Nejvyšší podíl má {topCategoryLabel}
                     <TrendingUp className="size-4" />
                 </div>
                 <div className="leading-none text-muted-foreground">

@@ -1,0 +1,4 @@
+[build.environment]
+  # These values are intentionally public at runtime in a Next.js browser app.
+  # Netlify secret scanner should not block deploys when these appear in compiled output.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY"

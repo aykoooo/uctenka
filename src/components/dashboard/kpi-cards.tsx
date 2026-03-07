@@ -20,7 +20,7 @@ interface KpiCardsProps {
 
 type TrendDirection = "up" | "down" | "flat";
 
-function getTrend(current: number, previous: number, goodWhen: "up" | "down" = "up") {
+function getTrend(current: number, previous: number) {
     const delta = current - previous;
 
     const direction: TrendDirection = delta === 0 ? "flat" : delta > 0 ? "up" : "down";
@@ -29,13 +29,9 @@ function getTrend(current: number, previous: number, goodWhen: "up" | "down" = "
             ? (current === 0 ? 0 : 100)
             : Math.abs((delta / Math.abs(previous)) * 100);
 
-    const isPositive =
-        direction === "flat" ? true : goodWhen === "up" ? delta > 0 : delta < 0;
-
     return {
         direction,
         percent,
-        isPositive,
         sentence:
             direction === "flat"
                 ? "Beze změny oproti minulému měsíci"
@@ -43,7 +39,7 @@ function getTrend(current: number, previous: number, goodWhen: "up" | "down" = "
         badgeClass:
             direction === "flat"
                 ? "border-border text-muted-foreground"
-                : isPositive
+                : delta < 0
                     ? "border-emerald-200/80 bg-emerald-50/80 text-emerald-700"
                     : "border-red-200/80 bg-red-50/80 text-red-700",
     };
@@ -66,7 +62,6 @@ export function KpiCards({ stats }: KpiCardsProps) {
             helper: "Součet všech zpracovaných účtenek",
             current: stats.monthlyExpenses,
             previous: stats.previousMonthExpenses,
-            goodWhen: "up" as const,
         },
         {
             label: "Účtenky tento měsíc",
@@ -74,7 +69,6 @@ export function KpiCards({ stats }: KpiCardsProps) {
             helper: "Počet nově nahraných účtenek",
             current: stats.receiptCount,
             previous: stats.previousMonthReceiptCount,
-            goodWhen: "up" as const,
         },
         {
             label: "Největší kategorie",
@@ -82,7 +76,6 @@ export function KpiCards({ stats }: KpiCardsProps) {
             helper: stats.topCategory ? formatCZK(stats.topCategory.amount) : "Bez dat",
             current: stats.topCategory?.amount ?? 0,
             previous: stats.previousTopCategory?.amount ?? 0,
-            goodWhen: "up" as const,
         },
         {
             label: "Ke kontrole",
@@ -90,14 +83,13 @@ export function KpiCards({ stats }: KpiCardsProps) {
             helper: "Čeká na manuální revizi",
             current: stats.pendingReviewCount,
             previous: stats.previousPendingReviewCount,
-            goodWhen: "down" as const,
         },
     ];
 
     return (
         <>
             {kpis.map((kpi) => {
-                const trend = getTrend(kpi.current, kpi.previous, kpi.goodWhen);
+                const trend = getTrend(kpi.current, kpi.previous);
                 const TrendIcon =
                     trend.direction === "flat"
                         ? Minus

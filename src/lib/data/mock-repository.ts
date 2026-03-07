@@ -19,6 +19,23 @@ import { cs } from "date-fns/locale";
 // Pre-map all receipts to domain types once
 const allReceipts: Receipt[] = MOCK_RECEIPT_ROWS.map(mapBackendReceiptToDomain);
 
+const INVOICE_PREFIX = "Faktura: ";
+
+function isIncomeInvoice(receipt: Receipt): boolean {
+    return receipt.merchantName.startsWith(INVOICE_PREFIX) && (receipt.amount ?? 0) < 0;
+}
+
+function getExpenseAmount(receipt: Receipt): number {
+    const amount = receipt.amount ?? 0;
+    if (isIncomeInvoice(receipt)) return 0;
+    return amount > 0 ? amount : 0;
+}
+
+function getIncomeAmount(receipt: Receipt): number {
+    if (!isIncomeInvoice(receipt)) return 0;
+    return Math.abs(receipt.amount ?? 0);
+}
+
 export class MockRepository implements DataRepository {
     async getReceipts(filters?: ReceiptFilters): Promise<Receipt[]> {
         let result = [...allReceipts];
@@ -87,8 +104,8 @@ export class MockRepository implements DataRepository {
             (r) => r.date && isSameMonth(r.date, previousMonthStart)
         );
 
-        const monthlyExpenses = thisMonthReceipts.reduce((sum, r) => sum + (r.amount ?? 0), 0);
-        const previousMonthExpenses = previousMonthReceipts.reduce((sum, r) => sum + (r.amount ?? 0), 0);
+        const monthlyExpenses = thisMonthReceipts.reduce((sum, r) => sum + getExpenseAmount(r), 0);
+        const previousMonthExpenses = previousMonthReceipts.reduce((sum, r) => sum + getExpenseAmount(r), 0);
 
         const getTopCategoryFor = (
             receipts: Receipt[]
@@ -96,8 +113,10 @@ export class MockRepository implements DataRepository {
             const totals: Partial<Record<CategoryId, number>> = {};
 
             for (const receipt of receipts) {
-                if (!receipt.categoryId || receipt.amount === null) continue;
-                totals[receipt.categoryId] = (totals[receipt.categoryId] ?? 0) + receipt.amount;
+                if (!receipt.categoryId) continue;
+                const expenseAmount = getExpenseAmount(receipt);
+                if (expenseAmount <= 0) continue;
+                totals[receipt.categoryId] = (totals[receipt.categoryId] ?? 0) + expenseAmount;
             }
 
             let top: DashboardStats["topCategory"] = null;
@@ -133,37 +152,33 @@ export class MockRepository implements DataRepository {
     }
 
     async getMonthlyExpenses(): Promise<MonthlyExpense[]> {
-        const CZ_MONTHS = [
-            "Led", "Úno", "Bře", "Dub", "Kvě", "Čvn",
-            "Čvc", "Srp", "Zář", "Říj", "Lis", "Pro",
-        ];
-
-        const monthMap: Record<string, number> = {};
+        const monthMap: Record<string, { amount: number; income: number }> = {};
 
         for (const r of allReceipts) {
             if (!r.date || r.amount === null) continue;
             const key = `${r.date.getFullYear()}-${String(r.date.getMonth() + 1).padStart(2, "0")}`;
-            monthMap[key] = (monthMap[key] ?? 0) + r.amount;
+
+            if (!monthMap[key]) {
+                monthMap[key] = { amount: 0, income: 0 };
+            }
+
+            monthMap[key].amount += getExpenseAmount(r);
+            monthMap[key].income += getIncomeAmount(r);
         }
 
         return Object.entries(monthMap)
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([key, amount]) => {
+            .map(([key, values]) => {
                 const [yearStr, monthStr] = key.split("-");
                 const date = new Date(parseInt(yearStr, 10), parseInt(monthStr, 10) - 1, 1);
                 const monthLabel = format(date, "LLLL", { locale: cs });
                 const capitalizedMonthLabel = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
 
-                // Generate random income, slightly higher than expenses
-                const minIncome = Math.max(amount * 1.1, 30000); // At least 10% higher, or a base of 30k
-                const maxIncome = minIncome + 20000; // Up to 20k more than minIncome
-                const income = Math.floor(Math.random() * (maxIncome - minIncome + 1)) + minIncome;
-
                 return {
                     month: key,
                     label: capitalizedMonthLabel,
-                    amount,
-                    income,
+                    amount: values.amount,
+                    income: values.income,
                 };
             });
     }
@@ -173,10 +188,13 @@ export class MockRepository implements DataRepository {
 
         for (const r of allReceipts) {
             if (!r.categoryId) continue;
+            const expenseAmount = getExpenseAmount(r);
+            if (expenseAmount <= 0) continue;
+
             if (!catMap[r.categoryId]) {
                 catMap[r.categoryId] = { amount: 0, count: 0 };
             }
-            catMap[r.categoryId].amount += r.amount ?? 0;
+            catMap[r.categoryId].amount += expenseAmount;
             catMap[r.categoryId].count += 1;
         }
 

@@ -6,10 +6,11 @@ import {
     CardTitle,
     CardDescription,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Receipt } from "@/types/domain";
 import { CategoryBadge } from "@/components/shared/category-badge";
 import { formatCZK, formatDate } from "@/lib/formatters";
+import { getMerchantFallback, getMerchantLogo } from "@/lib/constants/merchant-logos";
 
 interface RecentReceiptsProps {
     receipts: Receipt[];
@@ -27,7 +28,8 @@ export function RecentReceipts({ receipts }: RecentReceiptsProps) {
             <CardContent>
                 <div className="flex flex-col gap-6">
                     {receipts.map((receipt) => {
-                        const fallback = receipt.merchantName.substring(0, 2).toUpperCase();
+                        const fallback = getMerchantFallback(receipt.merchantName);
+                        const logo = getMerchantLogo(receipt.merchantName);
                         return (
                             <Link
                                 key={receipt.id}
@@ -35,6 +37,9 @@ export function RecentReceipts({ receipts }: RecentReceiptsProps) {
                                 className="flex items-center gap-4 hover:bg-muted/50 p-2 -m-2 rounded-md transition-colors"
                             >
                                 <Avatar className="hidden h-9 w-9 sm:flex">
+                                    {logo ? (
+                                        <AvatarImage src={logo.src} alt={logo.alt} />
+                                    ) : null}
                                     <AvatarFallback>{fallback}</AvatarFallback>
                                 </Avatar>
                                 <div className="grid gap-1 flex-1">
