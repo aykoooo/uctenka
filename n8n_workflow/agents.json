@@ -1,0 +1,942 @@
+{
+  "name": "agents",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": true
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        912,
+        -384
+      ],
+      "id": "618673a7-6deb-48fd-ab6b-b0bf113a9942",
+      "name": "Telegram Trigger",
+      "webhookId": "8f036435-d37e-4088-aab7-45446b4d1488",
+      "credentials": {
+        "telegramApi": {
+          "id": "OpLhPcibNn6p50SP",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://upqzspnjcqyrwvntcpxu.supabase.co/storage/v1/object/receipt_images/receipt_{{ $json.message.message_id }}.jpg",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "image/jpeg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2352,
+        -368
+      ],
+      "id": "f36c92b9-09a2-4429-b39f-b0422d3a7c37",
+      "name": "HTTP Request",
+      "credentials": {
+        "supabaseApi": {
+          "id": "y30Vggv0NZKNtoYb",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api-v2.mindee.net/v2/inferences/enqueue",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "model_id",
+              "value": "=4525d27d-e949-49a2-b2ee-a7ef6ee1ea4f"
+            },
+            {
+              "name": "rag",
+              "value": "false"
+            },
+            {
+              "name": "confidence",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1808,
+        -208
+      ],
+      "id": "09f741df-c88a-45c0-9438-b0dcf2825851",
+      "name": "Mindee V2 POST",
+      "alwaysOutputData": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oi9VD4fTEvT4QAhB",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.error.status }}",
+                    "rightValue": 302,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "bb9be41d-c737-4452-8cc4-e23591f4c2ec"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "3c5993f0-0560-48f7-84dd-51f71a9f261e",
+                    "leftValue": "={{ $json.error.status }}",
+                    "rightValue": 302,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gt"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8ceb4d56-9a2c-46f3-a3e2-c7b5aaece32c",
+                    "leftValue": "={{ $json.job.status }}",
+                    "rightValue": "={{ \"Processing\" || \"Waiting\" }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "27e4f799-1b07-48ff-ba13-b94038a3d4db",
+                    "leftValue": "={{ $json.job.status }}",
+                    "rightValue": "Failed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2192,
+        432
+      ],
+      "id": "de6a386f-dd84-4439-97bf-1c3b660dd971",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Mindee failed to process the enqueued document."
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        2592,
+        720
+      ],
+      "id": "76f2defd-0030-4d92-8c26-aa5271816fae",
+      "name": "Processing Failed"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1952,
+        176
+      ],
+      "id": "63411779-bb48-40dc-84d9-257ee31a9c88",
+      "name": "Initial delay",
+      "webhookId": "c7c27c52-ffae-4ba2-b92d-f8ab3e3a6f23"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d44fc0a2-a92f-4561-af8c-bb6721e75e0c",
+              "leftValue": "={{ $json.job.error }}",
+              "rightValue": "200",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2048,
+        -96
+      ],
+      "id": "42ccb626-0681-4fc8-9162-22ca3abfae12",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Failed enqueueing to Mindee API."
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        2352,
+        -192
+      ],
+      "id": "6a216619-8fc7-4714-8447-f6e2c76a0adf",
+      "name": "HTTP POST Error"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Mindee failed to retrieve document."
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        2592,
+        576
+      ],
+      "id": "09625e3e-6d8e-49d4-9e19-bd4d6ba02522",
+      "name": "HTTP GET Error"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1744,
+        464
+      ],
+      "id": "136250d0-e996-437b-8096-23f4c4d8b5d0",
+      "name": "Polling delay",
+      "webhookId": "f424d016-3e0f-472c-9e25-74858f28554d"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Mindee V2 POST').item.json.job.polling_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "maxRedirects": 1
+            }
+          },
+          "timeout": 5000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2592,
+        416
+      ],
+      "id": "a587a3c8-deaa-4f8e-9f48-77b30321c869",
+      "name": "Mindee V2 GET Inference",
+      "alwaysOutputData": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oi9VD4fTEvT4QAhB",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Mindee V2 POST').item.json.job.polling_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "timeout": 5000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1984,
+        464
+      ],
+      "id": "37189875-6514-4224-a7b1-4c5c0fab6648",
+      "name": "Mindee V2 GET Job",
+      "alwaysOutputData": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oi9VD4fTEvT4QAhB",
+          "name": "Header Auth account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c928a691-4ac1-482d-b801-bc29dbaa5b3d",
+              "name": "inference",
+              "value": "={{ $json.inference }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2832,
+        64
+      ],
+      "id": "a16536f2-1531-49fe-ad50-6f73a9be3240",
+      "name": "Result"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3040,
+        -240
+      ],
+      "id": "695a57de-212c-43d8-a1d8-e91a6231a6a3",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "tableId": "receipts",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "image_url",
+              "fieldValue": "=https://upqzspnjcqyrwvntcpxu.supabase.co/storage/v1/object/public/{{ $('HTTP Request').item.json.Key }}"
+            },
+            {
+              "fieldId": "inference",
+              "fieldValue": "={{ $json.inference }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3280,
+        -256
+      ],
+      "id": "60d3ccd7-eb1e-42b9-820d-be294f7c1978",
+      "name": "Add to database",
+      "credentials": {
+        "supabaseApi": {
+          "id": "y30Vggv0NZKNtoYb",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=🏢 **Dodavatel:** {{ $json.inference.result.fields.supplier_name.value }}\n📍 **Adresa:** {{ $json.inference.result.fields.supplier_address.value.replace('\\n', ', ') }}\n🆔 **IČ/DIČ:** {{ $json.inference.result.fields.supplier_company_registration.items[0].fields.number.value }}\n\n---\n💰 **Celkem k úhradě:** {{ $json.inference.result.fields.total_amount.value }} {{ $json.inference.result.fields.locale.fields.currency.value }}\n📊 **Základ:** {{ $json.inference.result.fields.total_net.value }} | **DPH:** {{ $json.inference.result.fields.total_tax.value }}\n\n📅 **Datum:** {{ $json.inference.result.fields.date.value }} {{ $json.inference.result.fields.time.value ? '| 🕒 ' + $json.inference.result.fields.time.value : '' }}\n🧾 **Číslo dokladu:** `{{ $json.inference.result.fields.receipt_number.value }}`\n\n📂 **Kategorie:** {{ $json.inference.result.fields.purchase_category.value }}\n🏷️ **Podkategorie:** {{ $json.inference.result.fields.purchase_subcategory.value }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3232,
+        160
+      ],
+      "id": "3186fc90-d721-42da-bfcf-2a51195a58ea",
+      "name": "Send summary",
+      "webhookId": "6323ddb3-dc66-422a-92f1-eaa2ddd4038f",
+      "credentials": {
+        "telegramApi": {
+          "id": "OpLhPcibNn6p50SP",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.photo ? true : false }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    },
+                    "id": "1fdc588d-d050-4238-980d-94170b7fc57f"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "de970894-de3e-4987-b7f1-f76a81ecaa75",
+                    "leftValue": "={{ $json.message.text ? true : false }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        -336
+      ],
+      "id": "7231797e-c190-44bf-8da7-7585fef27633",
+      "name": "Choose response"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Dělám na tom...",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        -512
+      ],
+      "id": "7de1837e-6cdf-4525-86b3-426e1cdc63bc",
+      "name": "Respond",
+      "webhookId": "6323ddb3-dc66-422a-92f1-eaa2ddd4038f",
+      "credentials": {
+        "telegramApi": {
+          "id": "OpLhPcibNn6p50SP",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Dej mi chviličku, pracuje se na tom...",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1552,
+        800
+      ],
+      "id": "b82cb260-5744-4c66-8c59-087edf5d807b",
+      "name": "Respond 2",
+      "webhookId": "6323ddb3-dc66-422a-92f1-eaa2ddd4038f",
+      "credentials": {
+        "telegramApi": {
+          "id": "OpLhPcibNn6p50SP",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "receipts",
+        "returnAll": true,
+        "filterType": "none"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1824,
+        960
+      ],
+      "id": "8a33d899-6c6c-4d94-bae6-0c81d5da3ea9",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "y30Vggv0NZKNtoYb",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://llm.ai.e-infra.cz/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk-36ea9c55f17141ea9dd8a426a8016905"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  \"model\": \"deepseek-v3.2-thinking\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": `Jsi profesionální účetní AI asistent pro české OSVČ. Analyzuj data a odpověz v režimu „single-turn“. Používej profesionální češtinu. Odpověz a ukonči komunikaci. Neptej se na doplňující info.\n      \n      TVOJE HLAVNÍ PRAVIDLA PRO FORMÁT\n      1.Formátuj celou svou odpověď pouze pomocí HTML tagů podporovaných Telegramem (<b>, <i>, <u>, <s>, <a>, <code>, <pre>). Nepoužívej vůbec žádný Markdown a jiné tagy.\n\n      ZDE JSOU DATA Z DATABÁZE (JSON): ${JSON.stringify($('Aggregate').item.json.data.map(item => ({ ...item.inference.result.fields, created_at: item.created_at })))}`\n    },\n    {\n      \"role\": \"user\",\n      \"content\": $('Telegram Trigger').item.json.message.text\n    }\n  ]\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2288,
+        1008
+      ],
+      "id": "c4b99392-6b49-4c43-b8f3-4c958d92768c",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.choices[0].message.content.replace(/<br\\s*\\/?>/gi, '') }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2704,
+        1040
+      ],
+      "id": "7108485f-ac46-4e91-ac78-cca834460e6e",
+      "name": "Respond ",
+      "webhookId": "6323ddb3-dc66-422a-92f1-eaa2ddd4038f",
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "OpLhPcibNn6p50SP",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2048,
+        976
+      ],
+      "id": "3186c9f6-e384-4fda-9890-d9b2bdba7e21",
+      "name": "Aggregate"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Choose response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mindee V2 POST": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP POST Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Mindee V2 GET Inference",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP GET Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Polling delay",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Processing Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initial delay": {
+      "main": [
+        [
+          {
+            "node": "Mindee V2 GET Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Initial delay",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP POST Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Polling delay": {
+      "main": [
+        [
+          {
+            "node": "Mindee V2 GET Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mindee V2 GET Inference": {
+      "main": [
+        [
+          {
+            "node": "Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mindee V2 GET Job": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Result": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Send summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Add to database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to database": {
+      "main": [
+        []
+      ]
+    },
+    "Choose response": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Mindee V2 POST",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond": {
+      "main": [
+        []
+      ]
+    },
+    "Respond 2": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send summary": {
+      "main": [
+        []
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Respond ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "baab708b-67f0-40ee-b939-98b27eebb4e7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c89aadd3e0bb3bc32797e806a1721dc723a67c87594476cf4dfee3539889c9e6"
+  },
+  "id": "nND37fSP3Ka30oz3",
+  "tags": []
+}
